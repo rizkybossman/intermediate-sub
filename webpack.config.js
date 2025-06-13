@@ -161,23 +161,9 @@ module.exports = {
       },
     ],
     devMiddleware: {
-      publicPath: "/",
+      publicPath: "./",
       writeToDisk: false,
     },
-    // setupMiddlewares: (middlewares, devServer) => {
-    //   if (!devServer) {
-    //     throw new Error("webpack-dev-server is not defined");
-    //   }
-
-    //   // Add custom middleware for service worker in development
-    //   devServer.app.get("/sw.js", (req, res) => {
-    //     res.type("application/javascript");
-    //     res.set("Service-Worker-Allowed", "/");
-    //     res.send('console.log("Service worker disabled in development");');
-    //   });
-
-    //   return middlewares;
-    // },
   },
   resolve: {
     alias: {

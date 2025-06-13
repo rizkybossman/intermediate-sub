@@ -1,3 +1,3 @@
 MAP_API_KEY=none
 
-DEPLOY_link=
+DEPLOY_link=intermediate-dicoding-ten.vercel.app

@@ -2,7 +2,7 @@ import {
   showNotificationPrompt,
   subscribeUser,
 } from "../../utils/notification.js";
-import AuthModel from "../../models/AuthModel.js"; // adjust the path if needed
+import { AuthModel } from "../../models/AuthModel.js";
 
 export const AddStoryView = () => {
   const view = document.createElement("main");
@@ -91,8 +91,9 @@ export const AddStoryView = () => {
           notificationInfo.style.display = granted ? "none" : "block";
 
           if (granted) {
-            const token = AuthModel.getToken(); // Implement this in AuthModel.js if missing
-            await subscribeUser(token); // this sends the push subscription to the API
+            const auth = new AuthModel(); 
+            const token = auth.getToken(); 
+            await subscribeUser(token); 
             showSuccess("Notifications enabled!");
           }
         } catch (error) {

@@ -1,4 +1,5 @@
-import { login, register } from '../services/authApi';
+import { login, register } from "../services/authApi";
+
 export class AuthModel {
   constructor() {
     this.token = localStorage.getItem("token") || null;
@@ -63,6 +64,9 @@ export class AuthModel {
   }
 
   getToken() {
+    // console.log("AuthModel.getToken called");
+    // console.log("AuthModel type:", typeof AuthModel);
+    // console.log("AuthModel:", AuthModel);
     return this.token;
   }
 }

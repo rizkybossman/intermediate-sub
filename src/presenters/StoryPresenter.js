@@ -148,10 +148,10 @@ export class StoryPresenter {
     
     await showNotificationPrompt(async (granted) => {
       if (granted) {
-        new Notification("Story created", {
-          body: `New story: ${data.description.substring(0, 50)}...`,
-          icon: "/assets/images/icon-192x192.png",
-        });
+        // new Notification("Story created (Local)", {
+        //   body: `New story: ${data.description.substring(0, 50)}...`,
+        //   icon: "/assets/images/icon-192x192.png",
+        // });
       }
     });
 
@@ -169,10 +169,10 @@ export class StoryPresenter {
 
       await showNotificationPrompt(async (granted) => {
         if (granted) {
-          new Notification("Story Saved Offline", {
-            body: "Will upload when you're back online",
-            icon: "/assets/images/icon-192x192.png"
-          });
+          // new Notification("Story Saved Offline (Local)", {
+          //   body: "Will upload when you're back online",
+          //   icon: "/assets/images/icon-192x192.png"
+          // });
         }
       });
 

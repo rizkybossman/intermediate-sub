@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "webpack serve --mode development --config webpack.config.js",
     "build": "webpack --mode production",
+    "vercel-build": "webpack --mode production",
     "preview": "serve -s dist"
   },
   "dependencies": {

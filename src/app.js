@@ -16,15 +16,21 @@ import { checkAuth, checkGuest } from "./utils/auth.js";
 import {
   requestNotificationPermission,
   subscribeUser,
+  showNotification
 } from "./utils/notification.js";
 import { initializeSkipToContent } from "./utils/SkipToContent.js";
 
+
 initializeSkipToContent();
+
+
 const authModel = new AuthModel();
 const storyModel = new StoryModel(authModel);
 
+
 const appRoot = document.getElementById("app");
 appRoot.appendChild(Header());
+
 
 let deferredPrompt;
 window.addEventListener("beforeinstallprompt", (e) => {
@@ -42,6 +48,7 @@ window.addEventListener("beforeinstallprompt", (e) => {
     });
   }
 });
+
 
 const initMapWithRetry = async (
   handler,
@@ -75,6 +82,7 @@ window.addEventListener("logout", () => {
   updateAuthUI(false);
   router.navigateTo("/login");
 });
+
 
 const routes = [
   {
@@ -112,15 +120,19 @@ const routes = [
     view: async () => {
       if (!checkAuth(authModel, router)) return ErrorView().getView();
       const view = StoriesView();
-      new StoryPresenter(
+      const presenter = new StoryPresenter(
         storyModel,
         {
           bindLoadStories: view.bindLoadStories,
           displayStories: view.displayStories,
           showError: view.showError,
+          bindToggleBookmarkFilter: view.bindToggleBookmarkFilter,
+          bindBookmarkAction: view.bindBookmarkAction
         },
         router
       );
+
+      window.storyPresenter = presenter;
       return view.getView();
     },
   },
@@ -129,15 +141,18 @@ const routes = [
     view: async () => {
       if (!checkAuth(authModel, router)) return ErrorView().getView();
       const view = StoriesView();
-      new StoryPresenter(
+      const presenter = new StoryPresenter(
         storyModel,
         {
           bindLoadStories: view.bindLoadStories,
           displayStories: view.displayStories,
           showError: view.showError,
+          bindToggleBookmarkFilter: view.bindToggleBookmarkFilter,
+          bindBookmarkAction: view.bindBookmarkAction
         },
         router
       );
+      window.storyPresenter = presenter;
       return view.getView();
     },
   },
@@ -186,7 +201,9 @@ const routes = [
                         )}...`
                       )
                       .openPopup();
-                  } catch (error) {}
+                  } catch (error) {
+                    console.error("Map initialization error:", error);
+                  }
                 }
               }, 50);
             }
@@ -276,9 +293,12 @@ const routes = [
   },
 ];
 
+
 const router = new Router(routes);
 
+
 updateAuthUI(authModel.isAuthenticated());
+
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
@@ -288,23 +308,21 @@ if ("serviceWorker" in navigator) {
         if (authModel.isAuthenticated()) {
           try {
             if (Notification.permission === "granted") {
-              // Auto-subscribe if already granted
               await subscribeUser(authModel.getToken());
             } else if (Notification.permission === "default") {
-              // Ask for permission only if user hasn't responded yet
               const permission = await requestNotificationPermission();
               if (permission) await subscribeUser(authModel.getToken());
             }
-            // Do nothing if permission is "denied"
           } catch (error) {
             console.error("Push subscription failed:", error);
           }
         }
-      }) // <-- this was missing in your version!
+      })
       .catch((error) => {
         console.error("Service worker registration failed:", error);
       });
   });
+
 
   navigator.serviceWorker.addEventListener("message", (event) => {
     if (event.data?.type === "TRIGGER_SYNC") {
@@ -317,3 +335,9 @@ if ("serviceWorker" in navigator) {
     }
   });
 }
+
+
+window.addEventListener("error", (event) => {
+  showNotification("An unexpected error occurred", { type: "error" });
+  console.error("Global error:", event.error);
+});

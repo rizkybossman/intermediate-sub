@@ -34,7 +34,7 @@ export const subscribeUser = async (token) => {
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
       });
 
-      // Send subscription to server
+
       const result = await subscribeToNotifications(
         {
           endpoint: subscription.endpoint,
@@ -106,14 +106,36 @@ export const showNotificationPrompt = async (callback) => {
     return false;
   }
 
-  // Only show our custom prompt if in default state
+
   if (Notification.permission === "default") {
-    // You could show a custom UI here explaining why you want notifications
-    // For now we'll just trigger the browser's native prompt
+
     const permission = await Notification.requestPermission();
     if (callback) callback(permission === "granted");
     return permission === "granted";
   }
+};
+
+export const showNotification = (message, options = {}) => {
+  const { type = 'info', autoClose = 3000 } = options;
+  
+
+  const notification = document.createElement('div');
+  notification.className = `notification notification-${type}`;
+  notification.textContent = message;
+  notification.setAttribute('role', 'alert');
+  
+
+  document.body.appendChild(notification);
+  
+
+  if (autoClose) {
+    setTimeout(() => {
+      notification.classList.add('fade-out');
+      setTimeout(() => notification.remove(), 300);
+    }, autoClose);
+  }
+  
+  return notification;
 };
 
 function urlBase64ToUint8Array(base64String) {

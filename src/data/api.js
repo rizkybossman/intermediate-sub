@@ -113,3 +113,34 @@ export const unsubscribeFromNotifications = async (endpoint, token) => {
 
   return response.json();
 };
+
+export const bookmarkStory = async (storyId, token) => {
+  const response = await fetch(`${API_BASE_URL}/bookmarks`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ storyId }),
+  });
+  return response.json();
+};
+
+export const unbookmarkStory = async (storyId, token) => {
+  const response = await fetch(`${API_BASE_URL}/bookmarks/${storyId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.json();
+};
+
+export const getBookmarkedStories = async (token) => {
+  const response = await fetch(`${API_BASE_URL}/bookmarks`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.json();
+};

@@ -697,3 +697,207 @@ button:focus-visible,
   border-radius: 3px;
   margin-left: 10px;
 }
+
+/* Story Card Bookmark Styles */
+.story-image-container {
+  position: relative;
+}
+
+/* --- Bookmark Button on Story Card --- */
+.bookmark-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(52, 152, 219, 0.9); /* Blue with transparency */
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 0;
+  color: white;
+}
+
+.bookmark-button:hover {
+  background: #3498db;
+  transform: scale(1.1);
+}
+
+.bookmark-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.5);
+}
+
+.bookmark-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.bookmark-icon path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2px;
+  transition: fill 0.2s ease;
+}
+
+.bookmark-button.bookmarked .bookmark-icon path {
+  fill: currentColor;
+}
+
+.bookmark-button {
+  color: #fff;
+}
+
+.bookmark-button.bookmarked {
+  color: #ff6b6b;
+}
+
+/* --- Stories View Layout --- */
+.stories-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.stories-controls {
+  display: flex;
+  gap: 1rem;
+}
+
+/* --- Bookmark Filter Button --- */
+.bookmark-filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #3498db; /* Blue base */
+  border: none;
+  border-radius: 2rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  color: white; /* white text on blue */
+  margin-left: auto;
+}
+
+.bookmark-filter-btn:hover {
+  background: #e0e0e0;
+}
+
+.bookmark-filter-btn.active {
+  background: #ff6b6b;
+  color: white;
+}
+
+.bookmark-filter-btn svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.bookmark-filter-btn.active svg path {
+  fill: currentColor;
+}
+
+/* --- Empty State --- */
+.empty-state {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+  color: #666;
+}
+
+.empty-icon {
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.6;
+}
+
+.empty-message {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+/* --- Loading Indicator --- */
+#loading-indicator {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+}
+
+.spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 0.25rem solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top-color: #ff6b6b;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- Notification Styles --- */
+.notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 12px 24px;
+  border-radius: 4px;
+  color: white;
+  background: #333;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  transform: translateY(100%);
+  opacity: 0;
+  animation: slideIn 0.3s ease-out forwards;
+  max-width: 300px;
+}
+
+.notification-info {
+  background: #3498db;
+}
+
+.notification-success {
+  background: #2ecc71;
+}
+
+.notification-error {
+  background: #e74c3c;
+}
+
+.notification-warning {
+  background: #f39c12;
+}
+
+.fade-out {
+  animation: fadeOut 0.3s ease-in forwards;
+}
+
+@keyframes slideIn {
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}

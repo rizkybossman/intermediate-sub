@@ -1,4 +1,4 @@
-import { showNotificationPrompt } from "../utils/notification.js";
+import { showNotification, showNotificationPrompt } from "../utils/notification.js";
 
 export class StoryPresenter {
   constructor(storyModel, storyView, router) {
@@ -7,16 +7,17 @@ export class StoryPresenter {
     this.router = router;
     this.currentStoryId = null;
     this.isLoading = false;
-    this.mapInitialized = false;
+    this.showBookmarksOnly = false;
 
-    // Sync management
+
     this.isSyncing = false;
-    this.pendingSyncIds = new Set();
     this.syncQueue = new Set();
+
+
 
     this.initializeEventBindings();
     this.initializeSyncHandlers();
-    this.startSyncMonitor();
+    this.loadOfflineStoriesIntoQueue?.();
   }
 
   initializeEventBindings() {
@@ -31,67 +32,96 @@ export class StoryPresenter {
     if (this.storyView.bindLoadStoryDetail) {
       this.storyView.bindLoadStoryDetail(this.handleLoadStoryDetail.bind(this));
     }
+
+    if (this.storyView.bindToggleBookmarkFilter) {
+      this.storyView.bindToggleBookmarkFilter(this.toggleBookmarkFilter.bind(this));
+    }
+
+    if (this.storyView.bindBookmarkAction) {
+      this.storyView.bindBookmarkAction(this.handleBookmarkAction.bind(this));
+    }
   }
 
   initializeSyncHandlers() {
-    // Load existing offline stories into queue
-    this.loadOfflineStoriesIntoQueue();
-
-    // Set up event listeners
-    window.addEventListener('online', this.handleConnectionChange.bind(this));
-    window.addEventListener('focus', this.handleFocus.bind(this));
-  }
-
-  async loadOfflineStoriesIntoQueue() {
-    try {
-      const offlineStories = await this.storyModel.getOfflineStories();
-      offlineStories.forEach(story => this.syncQueue.add(story.id));
-      console.log('Initial sync queue:', Array.from(this.syncQueue));
-      
-      // Trigger sync if we're already online
+    window.addEventListener("online", () => this.handleOnline());
+    window.addEventListener("focus", () => {
       if (navigator.onLine) {
         this.handleOnline();
       }
+    });
+  }
+
+  loadOfflineStoriesIntoQueue() {
+
+    console.log("Offline sync queue loaded (stub)");
+  }
+
+  async toggleBookmarkFilter() {
+    this.showBookmarksOnly = !this.showBookmarksOnly;
+
+    try {
+      const result = this.showBookmarksOnly
+        ? await this.storyModel.getBookmarkedStories()
+        : await this.storyModel.getAllStories();
+
+      if (result.success) {
+        this.storyView.displayStories(result.stories);
+
+        if (typeof this.storyView.updateBookmarkFilterState === "function") {
+          this.storyView.updateBookmarkFilterState(this.showBookmarksOnly);
+        }
+
+        showNotification(
+          this.showBookmarksOnly
+            ? "Showing bookmarked stories"
+            : "Showing all stories",
+          { type: "info", autoClose: 2000 }
+        );
+      } else {
+        showNotification(result.message || "Failed to load stories", {
+          type: "error",
+        });
+      }
     } catch (error) {
-      console.error('Failed to load offline stories:', error);
+      console.error("Bookmark filter error:", error);
+      showNotification("Failed to toggle bookmark filter", { type: "error" });
     }
   }
 
-  handleConnectionChange() {
-    if (navigator.onLine) {
-      console.log('Connection restored - triggering sync');
-      setTimeout(() => this.handleOnline(), 1000);
-    }
-  }
+  async handleBookmarkAction(storyId) {
+    try {
+      const { success, message } = await this.storyModel.toggleBookmark(storyId);
 
-  handleFocus() {
-    if (navigator.onLine && this.syncQueue.size > 0) {
-      console.log('Window focused - checking sync');
-      this.handleOnline();
-    }
-  }
+      if (success) {
+        if (this.showBookmarksOnly) {
+          const { success, stories } = await this.storyModel.getBookmarkedStories();
+          if (success) {
+            this.storyView.displayStories(stories);
+          }
+        }
 
-  startSyncMonitor() {
-    setInterval(() => {
-      console.log('Sync Monitor:', {
-        isSyncing: this.isSyncing,
-        queueSize: this.syncQueue.size,
-        queueContents: Array.from(this.syncQueue),
-        pendingSyncs: Array.from(this.pendingSyncIds)
-      });
-    }, 10000);
+        showNotification(message, { type: "success", autoClose: 2000 });
+      } else {
+        showNotification(message || "Failed to update bookmark", { type: "error" });
+      }
+    } catch (error) {
+      console.error("Bookmark action error:", error);
+      showNotification("Failed to update bookmark", { type: "error" });
+    }
   }
 
   async handleLoadStories(page = 1, size = 10) {
     try {
-      const result = await this.storyModel.getAllStories(page, size);
+      const result = this.showBookmarksOnly
+        ? await this.storyModel.getBookmarkedStories()
+        : await this.storyModel.getAllStories(page, size);
 
       if (result.isOffline) {
         this.storyView.showOfflineWarning?.();
       }
 
       if (result.success) {
-        this.storyView.displayStories?.(result.stories || []);
+        this.storyView.displayStories(result.stories || []);
       } else {
         this.storyView.showError?.(result.message || "Failed to load stories");
       }
@@ -132,7 +162,19 @@ export class StoryPresenter {
       const result = await this.storyModel.addStory(data);
 
       if (result.success) {
-        this.handleAddSuccess(data);
+        this.storyView.showSuccess?.("Story added successfully!");
+
+        await showNotificationPrompt((granted) => {
+          if (granted) {
+
+          }
+        });
+
+        this.cleanup();
+        setTimeout(() => {
+          this.handleLoadStories();
+          this.router.navigateTo("/stories");
+        }, 1500);
       } else if (!result.success && !navigator.onLine) {
         await this.handleOfflineAdd(data);
       } else {
@@ -143,41 +185,19 @@ export class StoryPresenter {
     }
   }
 
-  async handleAddSuccess(data) {
-    this.storyView.showSuccess?.("Story added successfully!");
-    
-    await showNotificationPrompt(async (granted) => {
-      if (granted) {
-        // new Notification("Story created (Local)", {
-        //   body: `New story: ${data.description.substring(0, 50)}...`,
-        //   icon: "/assets/images/icon-192x192.png",
-        // });
-      }
-    });
-
-    this.cleanup();
-    setTimeout(() => {
-      this.handleLoadStories();
-      this.router.navigateTo("/stories");
-    }, 1500);
-  }
-
   async handleOfflineAdd(data) {
     try {
       const offlineResult = await this.storyModel.addStoryOffline(data);
       this.syncQueue.add(offlineResult.story.id);
 
-      await showNotificationPrompt(async (granted) => {
+      await showNotificationPrompt((granted) => {
         if (granted) {
-          // new Notification("Story Saved Offline (Local)", {
-          //   body: "Will upload when you're back online",
-          //   icon: "/assets/images/icon-192x192.png"
-          // });
+
         }
       });
 
       this.storyView.showSuccess?.("Story saved offline. Will sync when online!");
-      
+
       setTimeout(() => {
         this.handleLoadStories();
         this.router.navigateTo("/stories");
@@ -200,28 +220,24 @@ export class StoryPresenter {
   async handleOnline() {
     if (this.isSyncing || this.syncQueue.size === 0) return;
 
-    console.log('Starting sync with queue:', Array.from(this.syncQueue));
     this.isSyncing = true;
 
     try {
       const syncResult = await this.storyModel.syncOfflineStories(this.syncQueue);
-      console.log('Sync completed:', syncResult);
 
       if (syncResult.success && syncResult.syncedIds.length > 0) {
-        syncResult.syncedIds.forEach(id => {
+        syncResult.syncedIds.forEach((id) => {
           this.syncQueue.delete(id);
-          this.pendingSyncIds.delete(id);
         });
 
         this.storyView.showSuccess?.(`Synced ${syncResult.syncedIds.length} stories!`);
         this.handleLoadStories();
       }
     } catch (error) {
-      console.error('Sync failed:', error);
+      console.error("Sync failed:", error);
     } finally {
       this.isSyncing = false;
-      
-      // Retry if there are remaining stories
+
       if (this.syncQueue.size > 0) {
         setTimeout(() => this.handleOnline(), 5000);
       }
@@ -229,11 +245,9 @@ export class StoryPresenter {
   }
 
   cleanup() {
-    if (typeof this.storyView.cleanup === "function") {
-      this.storyView.cleanup();
-    }
-
+    this.storyView.cleanup?.();
     this.currentStoryId = null;
     this.isLoading = false;
+    this.showBookmarksOnly = false;
   }
 }
